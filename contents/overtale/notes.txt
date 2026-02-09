@@ -1,0 +1,1 @@
+- Weapons around the thing to fire when pressing a confirm button after selecting a target on the monitor (automatically make the correct weapon(s) fire)

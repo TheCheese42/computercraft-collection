@@ -27,7 +27,11 @@ end
 
 local function addRecord(name, data, maxEntries)
     local drive = findDataDrive()
-    local recordFile = io.open(drive.getMountPath() .. "/records/" .. name .. ".txt", "a")
+    local recordPath = drive.getMountPath() .. "/records/" .. name .. ".txt"
+    if not fs.exists(recordPath) then
+        io.open(recordPath, "w"):close()
+    end
+    local recordFile = io.open(recordPath, "a")
     if recordFile then
         recordFile:write(data or "", "\n")
         recordFile:close()

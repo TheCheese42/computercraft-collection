@@ -3,8 +3,8 @@ local util = require(".libs.util")
 local function getRadarTrackInfo(track)
     return {
         type = track.entityType:match("[:.](%w+)$"):gsub("^%l", string.upper),
-        name = util.nameFromUuid(track.id) or "---",
-        position = track.position,
+        name = util.nameFromUuid(track.id),
+        position = { x = math.ceil(track.position.x), y = math.ceil(track.position.y), z = math.ceil(track.position.z) },
     }
 end
 

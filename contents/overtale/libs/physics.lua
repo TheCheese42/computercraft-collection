@@ -1,5 +1,5 @@
-local GRAVITY_ACCELERATION <const> = 10
-local THRUSTER_FORCE <const> = 600000
+local GRAVITY_ACCELERATION = 10
+local THRUSTER_FORCE = 600000
 
 local function getMass()
     return ship.getMass()
@@ -42,3 +42,14 @@ local function distributeRedstoneOverAmount(level, amount)
     end
     return distribution
 end
+
+return {
+    getMass = getMass,
+    getLocation = getLocation,
+    getAngle = getAngle,
+    getWeight = getWeight,
+    calcThrusterForce = calcThrusterForce,
+    multiplierForRedstone = multiplierForRedstone,
+    redstoneForTargetValue = redstoneForTargetValue,
+    distributeRedstoneOverAmount = distributeRedstoneOverAmount,
+}

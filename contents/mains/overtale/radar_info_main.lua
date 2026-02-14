@@ -1,36 +1,30 @@
 local radar = require(".libs.radar")
+local sm = require(".libs.simple_monitor")
 
-local monitor = peripheral.wrap("front")
-monitor.setTextScale(0.5)
+local monitor = sm.Monitor:new(peripheral.wrap("front"), 0.5)
 
 while true do
     local target = radar.getRadarTarget(peripheral.wrap("bottom"))
-    local line = 3
-    monitor.clear()
-    monitor.setCursorPos(1, line)
-    line = line + 1
-    monitor.write("Type: ")
-    monitor.write(target.type)
-    monitor.setCursorPos(1, line)
-    line = line + 1
-    monitor.write("Name: ")
+
+    monitor:clear()
+    monitor:println()
+    monitor:println()
+
+    monitor:print("Type: ")
+    monitor:println(target.type)
+
+    monitor:print("Name: ")
     if target.name and #target.name > 8 then
-        monitor.setCursorPos(1, line)
-        line = line + 1
+        monitor:println()
     end
-    monitor.write(target.name or "---")
-    line = line + 1
-    monitor.setCursorPos(1, line)
-    line = line + 1
-    monitor.write("X: ")
-    monitor.write(target.position.x)
-    monitor.setCursorPos(1, line)
-    line = line + 1
-    monitor.write("Y: ")
-    monitor.write(target.position.y)
-    monitor.setCursorPos(1, line)
-    line = line + 1
-    monitor.write("Z: ")
-    monitor.write(target.position.z)
+    monitor:println(target.name or "---")
+    monitor:println()
+
+    monitor:print("X: ")
+    monitor:println(target.position.x)
+    monitor:print("Y: ")
+    monitor:println(target.position.y)
+    monitor:print("Z: ")
+    monitor:println(target.position.z)
     sleep(0.2)
 end

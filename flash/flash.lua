@@ -2,7 +2,7 @@ local mains = { ... }
 
 local function deepFlash(path, target, libsDir)
     for line in io.lines(path) do
-        local libRequire = line:match("require[(]\"[.]libs[.]([.%w]+)\"[)]$")
+        local libRequire = line:match("require[(]\"[.]libs[.]([._%w]+)\"[)]$")
         if libRequire then
             local lib = libRequire:gsub("[.]", "/") .. ".lua"
             local libPath = fs.combine(libsDir, lib)

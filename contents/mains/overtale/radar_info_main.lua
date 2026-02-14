@@ -32,5 +32,5 @@ while true do
     line = line + 1
     monitor.write("Z: ")
     monitor.write(target.position.z)
-    sleep(0.5)
+    sleep(0.2)
 end

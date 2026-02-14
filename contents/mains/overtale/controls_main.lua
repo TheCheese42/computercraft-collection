@@ -1,4 +1,5 @@
 local physics = require(".libs.physics")
+local redstoneUtils = require(".libs.redstone_utils")
 
 local THRUSTER_FORCE_MULTIPLIER = 1.2
 local MODULE_COUNT = 4
@@ -60,8 +61,9 @@ while true do
     end
 
     if action == "UP" then
-        applyRedstoneDistribution(physics.distributeRedstoneOverAmount(15 * THRUSTERS_PER_MODULE, THRUSTERS_PER_MODULE))
+        applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(15 * THRUSTERS_PER_MODULE,
+            THRUSTERS_PER_MODULE))
     elseif action == "STOP" then
-        applyRedstoneDistribution(physics.distributeRedstoneOverAmount(0, THRUSTERS_PER_MODULE))
+        applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(0, THRUSTERS_PER_MODULE))
     end
 end

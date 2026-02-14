@@ -3,14 +3,17 @@ local function nameFromUuid(uuid)
     if not http.checkURL(url) then
         return uuid
     end
-    local request = http.get(url)
-    if not request then
+    local response = http.get(url)
+    if not response then
         return nil
     end
-    request.readLine()
-    request.readLine()
-    local nameLine = request.readLine()
-    request.close()
+    response.readLine()
+    response.readLine()
+    local nameLine = response.readLine()
+    response.close()
+    if not nameLine then
+        return nil
+    end
     return string.sub(nameLine, 13, string.len(nameLine) - 2)
 end
 

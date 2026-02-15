@@ -10,6 +10,9 @@ end
 
 local function getRadarTarget(radar)
     local track = radar.getSelectedTrack()
+    if not track then
+        return nil
+    end
     return getRadarTrackInfo(track)
 end
 

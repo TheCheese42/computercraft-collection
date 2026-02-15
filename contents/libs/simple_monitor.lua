@@ -1,10 +1,10 @@
 Monitor = { monitor = nil }
 Monitor.__index = Monitor
 
-function Monitor:new(monitor, scale)
-    setmetatable({}, Monitor)
+function Monitor.new(monitor, scale)
+    local self = setmetatable({}, Monitor)
     self.monitor = monitor
-    self.scale = scale or 1.0
+    self.monitor.setTextScale(scale or 1.0)
     return self
 end
 

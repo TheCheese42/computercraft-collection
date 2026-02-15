@@ -1,7 +1,7 @@
 local radar = require(".libs.radar")
 local sm = require(".libs.simple_monitor")
 
-local monitor = sm.Monitor:new(peripheral.wrap("front"), 0.5)
+local monitor = sm.Monitor.new(peripheral.wrap("front"), 0.5)
 
 while true do
     local target = radar.getRadarTarget(peripheral.wrap("bottom"))

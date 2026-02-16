@@ -1,7 +1,7 @@
 local mains = { ... }
 
 local webLibs = {
-    ["cryptoNet"] = "https://raw.githubusercontent.com/SiliconSloth/CryptoNet/refs/heads/master/cryptoNet.lua",
+    ["cryptoNet"] = "https://github.com/TheCheese42/CryptoNet/raw/refs/heads/master/cryptoNet.lua",
 }
 
 local function downloadLibrary(name, target)
@@ -67,8 +67,7 @@ end
 for _, main in ipairs(mains) do
     local path = fs.combine("/disk/contents/mains/", main .. (main:match("[.]lua$") and "" or ".lua"))
     if not fs.exists(path) then
-        print("Invalid path to main. Should be relative to /disk/contents/mains.")
-        os.exit(1)
+        error("Invalid path to main. Should be relative to /disk/contents/mains.")
     end
     write("Erasing drive...")
     saveDelete("/")

@@ -1,5 +1,7 @@
 local physics = require(".libs.physics")
 local redstoneUtils = require(".libs.redstone_utils")
+local sc = require(".libs.simple_commands")
+local utils = require(".libs.utils")
 
 local THRUSTER_FORCE_MULTIPLIER = 1.2
 local MODULE_COUNT = 4
@@ -42,24 +44,8 @@ local function applyRedstoneDistribution(distribution)
     end
 end
 
-while true do
-    peripheral.find(
-        "modem",
-        function(name, modem) if modem.isWireless() then return rednet.open(name) end end
-    )
-    local _, command = rednet.receive("control_tick")
-    local i = 1
-    local action
-    local param
-    for part in command:gmatch("%S+") do
-        if i == 1 then
-            action = part
-        elseif i == 2 then
-            param = part
-        end
-        i = i + 1
-    end
-
+local function listener(command)
+    local action, param = table.unpack(utils.split(command))
     if action == "UP" then
         applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(15 * THRUSTERS_PER_MODULE,
             THRUSTERS_PER_MODULE))
@@ -67,3 +53,8 @@ while true do
         applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(0, THRUSTERS_PER_MODULE))
     end
 end
+
+peripheral.find(
+    "modem",
+    function(name, modem) if modem.isWireless() then sc.hostServer("OvertaleControls", listener, name) end end
+)

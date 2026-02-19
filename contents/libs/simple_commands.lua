@@ -13,7 +13,7 @@ local cryptoNet = require(".libs.cryptoNet")
 
 local function hostServer(serverName, listener, modemName)
     local function onStartServer()
-        cryptoNet.host(serverName, false, false, modemName)
+        cryptoNet.host(serverName, false, true, modemName)
     end
 
     local function onEventServer(event)
@@ -31,13 +31,13 @@ end
 
 local function clientConnect(serverName, modemName)
     local socket = cryptoNet.connect(serverName, nil, nil, nil, modemName)
-    local user = settings.get("cn_username")
+    local user = settings.get("sc_username")
     if not user then
-        error("Please set a username (set cn_username ...)")
+        error("Please set a username (set sc_username ...)")
     end
-    local pass = settings.get("cn_password")
+    local pass = settings.get("sc_password")
     if not pass then
-        error("Please set a password (set cn_password ...)")
+        error("Please set a password (set sc_password ...)")
     end
     local loginResult = cryptoNet.login(socket, user, pass)
     if loginResult == "login_failed" then

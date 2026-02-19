@@ -5,7 +5,38 @@ local utils = require(".libs.utils")
 
 local THRUSTER_FORCE_MULTIPLIER = 1.2
 local MODULE_COUNT = 4
-local THRUSTERS_PER_MODULE = 8
+local THRUSTERS_PER_MODULE = 9
+
+local sendModuleBl
+local sendModuleBr
+local sendModuleFl
+local sendModuleFr
+
+
+peripheral.find("modem",
+    function(name, modem)
+        if modem.isWireless() then
+            sendModuleBl = sc.clientConnect("OvertaleModuleBl", name)
+        end
+    end)
+peripheral.find("modem",
+    function(name, modem)
+        if modem.isWireless() then
+            sendModuleBr = sc.clientConnect("OvertaleModuleBr", name)
+        end
+    end)
+peripheral.find("modem",
+    function(name, modem)
+        if modem.isWireless() then
+            sendModuleFl = sc.clientConnect("OvertaleModuleFl", name)
+        end
+    end)
+peripheral.find("modem",
+    function(name, modem)
+        if modem.isWireless() then
+            sendModuleFr = sc.clientConnect("OvertaleModuleFr", name)
+        end
+    end)
 
 local function getForcePerModuleToHold()
     return physics.getWeight() / MODULE_COUNT
@@ -21,26 +52,21 @@ local function redstonePerModuleToHold()
     return physics.redstoneForTargetValue(calcModuleForce(), getForcePerModuleToHold(), 15 * THRUSTERS_PER_MODULE)
 end
 
-local function applyRedstoneDistribution(distribution)
-    local relay1, relay2 = peripheral.find("redstone_relay")
-    for i, strength in ipairs(distribution) do
-        if i == 1 then
-            relay1.setAnalogOutput("front", strength)
-        elseif i == 2 then
-            relay2.setAnalogOutput("front", strength)
-        elseif i == 3 then
-            relay1.setAnalogOutput("back", strength)
-        elseif i == 4 then
-            relay2.setAnalogOutput("back", strength)
-        elseif i == 5 then
-            relay1.setAnalogOutput("bottom", strength)
-        elseif i == 6 then
-            relay2.setAnalogOutput("bottom", strength)
-        elseif i == 7 then
-            relay1.setAnalogOutput("left", strength)
-        elseif i == 8 then
-            relay2.setAnalogOutput("right", strength)
-        end
+-- Takes a distribution from redstone_utils and an integer signalizing
+-- which modules to apply it to (bit flags, see setThrustersAngle())
+local function applyRedstoneDistribution(distribution, which)
+    which = which or 15
+    if bit.band(which, 1) then
+        sendModuleBl(distribution)
+    end
+    if bit.band(which, 2) then
+        sendModuleBr(distribution)
+    end
+    if bit.band(which, 4) then
+        sendModuleFl(distribution)
+    end
+    if bit.band(which, 8) then
+        sendModuleFr(distribution)
     end
 end
 

@@ -2,6 +2,9 @@ local mains = { ... }
 
 local webLibs = {
     ["cryptoNet"] = "https://github.com/TheCheese42/CryptoNet/raw/refs/heads/master/cryptoNet.lua",
+    ["aes"] = "https://pastebin.com/raw/rCYDnCxn",
+    ["mt_isaac"] = "https://pastebin.com/raw/D1th4Htw",
+    ["sha256_hmac_pbkdf2"] = "https://pastebin.com/raw/6UV4qfNF",
 }
 
 local function downloadLibrary(name, target)

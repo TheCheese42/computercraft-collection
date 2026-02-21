@@ -11,7 +11,7 @@ end
 
 local function getRadarTarget(radar)
     local track = radar.getSelectedTrack()
-    if not track then
+    if not track or next(track) == nil then
         return nil
     end
     return getRadarTrackInfo(track)

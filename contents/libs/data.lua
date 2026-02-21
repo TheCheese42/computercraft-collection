@@ -50,10 +50,28 @@ local function addRecord(name, data, maxEntries)
     end
 end
 
+-- Always saves the highest record. Data must be a number.
+local function recordHighest(name, data)
+    local drive = findDataDrive()
+    local recordPath = drive.getMountPath() .. "/records/" .. name .. ".txt"
+    if not fs.exists(recordPath) then
+        io.open(recordPath, "w"):close()
+    end
+    local recordFile = io.open(recordPath, "r+")
+    if recordFile then
+        local currentMax = recordFile:read("a")
+        if data > (tonumber(currentMax) or 0) then
+            recordFile:seek("set")
+            recordFile:write(data)
+        end
+        recordFile:close()
+    end
+end
 
 return {
     findDataDrive = findDataDrive,
     fetchRecords = fetchRecords,
     fetchLatestRecord = fetchLatestRecord,
     addRecord = addRecord,
+    recordHighest = recordHighest,
 }

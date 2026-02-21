@@ -49,7 +49,7 @@ end
 local function redstonePerModuleToHold()
     local maxForcePerThruster = physics.calcThrusterForce(THRUSTER_FORCE_MULTIPLIER)
     local maxForcePerModule = maxForcePerThruster * THRUSTERS_PER_MODULE
-    return physics.redstoneForTargetValue(calcModuleForce(), getForcePerModuleToHold(), 15 * THRUSTERS_PER_MODULE)
+    return redstoneUtils.redstoneForTargetValue(calcModuleForce(), getForcePerModuleToHold(), 15 * THRUSTERS_PER_MODULE)
 end
 
 -- Takes a distribution from redstone_utils and an integer signalizing

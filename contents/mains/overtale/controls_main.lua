@@ -12,6 +12,7 @@ local sendModuleBr
 local sendModuleFl
 local sendModuleFr
 
+local isEngineOn = false
 
 peripheral.find("modem",
     function(name, modem)
@@ -103,23 +104,40 @@ local function setThrustersAngle(angle, which)
     end
 end
 
+local function enableEngine(state)
+    isEngineOn = state
+    local redstoneRelay = peripheral.find("redstone_relay")
+    redstoneRelay.setOutput("bottom", not state)
+end
+
 --[[
 API:
+ON - Turn on the engine.
+OFF - Turn off the engine.
 UP <int blocks> - Move up x blocks.
 DOWN <int blocks> - Drop down x blocks.
 HOLD - Hold current position and momentum.
 LAND [int force] - Attempt to land. If force>0 it will land even if the spot is not suitable for landing.
 TURN <int degrees> - Turn clockwise by the specified degrees (can be negative).
 MOVE <int blocks> - Move forward by x blocks (can be negative).
+BRAKE - Bring horizontal momentum down to zero.
+SPEED - Set horizontal speed on a scale from 0 to 15.
 STABILIZE - Make sure that the ship floats upright.
 CANCEL - Cancels any running operation.
 
 When a command is running, new ones will be queued. Only HOLD will be canceled if running.
 If nothing to do and in the air, HOLD will execute automatically.
+If the engine is turned off, only the ON command will work.
 ]]
 local function listener(command)
     local action, param1, param2 = table.unpack(utils.split(command))
-    if action == "UP" then
+    if not isEngineOn and action ~= "ON" then
+        return
+    elseif action == "ON" then
+        enableEngine(true)
+    elseif action == "OFF" then
+        enableEngine(false)
+    elseif action == "UP" then
         setThrustersAngle(0)
         applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(15 * THRUSTERS_PER_MODULE,
             THRUSTERS_PER_MODULE))
@@ -129,6 +147,7 @@ local function listener(command)
     end
 end
 
+enableEngine(false)
 peripheral.find(
     "modem",
     function(name, modem) if modem.isWireless() then sc.hostServer("OvertaleControls", listener, name) end end

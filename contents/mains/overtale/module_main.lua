@@ -34,7 +34,7 @@ local function refuelThrusters()
         for _, thruster in ipairs(thrusters) do
             peripheral.call(thruster, "pullFluid", peripheral.getName(peripheral.find("tfmg:steel_fluid_tank")))
         end
-        sleep(2)
+        sleep(1)
     end
 end
 

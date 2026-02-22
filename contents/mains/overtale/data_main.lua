@@ -20,7 +20,10 @@ while true do
     data.addRecord("distance", distance, 120)
     local distanceFluid = math.ceil(opticalSensorFluid.getDistance())
     data.addRecord("distance_fluid", distanceFluid, 120)
-    local fuel = peripheral.call("bottom", "tanks")[1].amount
+    local fuelBiggestTank = peripheral.find("fluid_storage").tanks()[1].amount
+    local fuelBigTanks = fuelBiggestTank * 4
+    local fuelSmallTanks = math.min(fuelBiggestTank, 216000) * 4
+    local fuel = fuelBigTanks + fuelSmallTanks
     data.addRecord("fuel", fuel, 120)
     data.recordHighest("max_fuel", fuel)
     sleep(0.5)

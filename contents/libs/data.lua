@@ -25,6 +25,17 @@ local function fetchLatestRecord(name, offset)
     return records[#records - (offset or 0)]
 end
 
+local function fetchAverage(name, amount, offsetFromLatest)
+    offsetFromLatest = offsetFromLatest or 0
+    local records = fetchRecords(name)
+    amount = (amount and amount <= #records) and amount or #records
+    local sum = 0
+    for i = #records - offsetFromLatest, #records - offsetFromLatest - amount + 1, -1 do
+        sum = sum + tonumber(records[i])
+    end
+    return sum / amount
+end
+
 local function addRecord(name, data, maxEntries)
     local drive = findDataDrive()
     local recordPath = drive.getMountPath() .. "/records/" .. name .. ".txt"
@@ -72,6 +83,7 @@ return {
     findDataDrive = findDataDrive,
     fetchRecords = fetchRecords,
     fetchLatestRecord = fetchLatestRecord,
+    fetchAverage = fetchAverage,
     addRecord = addRecord,
     recordHighest = recordHighest,
 }

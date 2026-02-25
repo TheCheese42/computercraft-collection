@@ -11,7 +11,8 @@
 
 local cryptoNet = require(".libs.cryptoNet")
 
-local function hostServer(serverName, listener, modemName)
+-- loginGift can be anything sendable via CryptoNet. It will be sent to clients on login.
+local function hostServer(serverName, listener, modemName, loginGift)
     local function onStartServer()
         cryptoNet.host(serverName, false, true, modemName)
     end
@@ -23,6 +24,9 @@ local function hostServer(serverName, listener, modemName)
             if socket.permissionLevel > 0 then
                 listener(message)
             end
+        elseif event[1] == "login" then
+            local socket = event[3]
+            cryptoNet.send(socket, loginGift)
         end
     end
 

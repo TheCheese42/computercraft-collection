@@ -1,7 +1,11 @@
 local util = require(".libs.utils")
 
 local function getRadarTrackInfo(track)
-    local type_ = track.entityType:match("[:.](%w+)$"):gsub("^%l", string.upper)
+    local type_match = track.entityType:match("[:.](%w+)$")
+    local type_ = (type_match and type_match or track.category):gsub("%L*", string.lower):gsub("^%l", string.upper)
+    if #type_ > 8 then
+        type_ = type_:sub(1, 8) .. "."
+    end
     return {
         type = type_,
         name = type_ == "Ship" and track.id:gsub("^%l", string.upper) or util.nameFromUuid(track.id),

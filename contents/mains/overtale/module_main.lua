@@ -25,7 +25,7 @@ end
 local function hostServerWrapped()
     peripheral.find(
         "modem",
-        function(name, modem) if modem.isWireless() then sc.hostServer(serverName, listener, name) end end
+        function(name, modem) if modem.isWireless() then sc.hostServer(serverName, listener, name, ship.getMass()) end end
     )
 end
 

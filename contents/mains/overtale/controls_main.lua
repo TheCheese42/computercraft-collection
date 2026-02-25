@@ -1,6 +1,7 @@
 local physics = require(".libs.physics")
 local redstoneUtils = require(".libs.redstone_utils")
 local sc = require(".libs.simple_commands")
+local cn = require(".libs.cryptoNet")
 local utils = require(".libs.utils")
 
 local THRUSTER_FORCE_MULTIPLIER = 1.2
@@ -12,7 +13,13 @@ local sendModuleBr
 local sendModuleFl
 local sendModuleFr
 
+local extraMass = 0
 local isEngineOn = false
+
+local commandQueue = {} -- FIFO Queue
+local commandsToCancel = {}
+local lastLocation = nil
+local currentVelocity = { x = 0, y = 0, z = 0 }
 
 peripheral.find("modem",
     function(name, modem)
@@ -20,37 +27,61 @@ peripheral.find("modem",
             sendModuleBl = sc.clientConnect("OvertaleModuleBl", name)
         end
     end)
+local event_type, event_msg = cn.listen()
+local event_type, event_msg = cn.listen()
+if event_type == "encrypted_message" then
+    extraMass = extraMass + event_msg
+end
 peripheral.find("modem",
     function(name, modem)
         if modem.isWireless() then
             sendModuleBr = sc.clientConnect("OvertaleModuleBr", name)
         end
     end)
+event_type, event_msg = cn.listen()
+event_type, event_msg = cn.listen()
+if event_type == "encrypted_message" then
+    extraMass = extraMass + event_msg
+end
 peripheral.find("modem",
     function(name, modem)
         if modem.isWireless() then
             sendModuleFl = sc.clientConnect("OvertaleModuleFl", name)
         end
     end)
+event_type, event_msg = cn.listen()
+event_type, event_msg = cn.listen()
+if event_type == "encrypted_message" then
+    extraMass = extraMass + event_msg
+end
 peripheral.find("modem",
     function(name, modem)
         if modem.isWireless() then
             sendModuleFr = sc.clientConnect("OvertaleModuleFr", name)
         end
     end)
-
-local function getForcePerModuleToHold()
-    return physics.getWeight() / MODULE_COUNT
+event_type, event_msg = cn.listen()
+event_type, event_msg = cn.listen()
+if event_type == "encrypted_message" then
+    print(event_type, event_msg)
+    extraMass = extraMass + event_msg
 end
 
-local function calcModuleForce()
+local function getForcePerModuleToHold()
+    return physics.getWeight(extraMass) / MODULE_COUNT
+end
+
+local function calcMaxModuleForce()
     return physics.calcThrusterForce(THRUSTER_FORCE_MULTIPLIER) * THRUSTERS_PER_MODULE
 end
 
+local function calcMaxShipForce()
+    return calcMaxModuleForce() * MODULE_COUNT
+end
+
 local function redstonePerModuleToHold()
-    local maxForcePerThruster = physics.calcThrusterForce(THRUSTER_FORCE_MULTIPLIER)
-    local maxForcePerModule = maxForcePerThruster * THRUSTERS_PER_MODULE
-    return redstoneUtils.redstoneForTargetValue(calcModuleForce(), getForcePerModuleToHold(), 15 * THRUSTERS_PER_MODULE)
+    return redstoneUtils.redstoneForTargetValue(calcMaxModuleForce(), getForcePerModuleToHold(),
+        15 * THRUSTERS_PER_MODULE)
 end
 
 -- Takes a distribution from redstone_utils and an integer signalizing
@@ -110,6 +141,21 @@ local function enableEngine(state)
     redstoneRelay.setOutput("bottom", not state)
 end
 
+local function cancelCommand(id)
+    for i = 1, #commandsToCancel do
+        if id == commandsToCancel[i] then
+            table.remove(commandsToCancel, i)
+            for j = 1, #commandQueue do
+                if id == commandQueue[j] then
+                    table.remove(commandQueue, j)
+                end
+            end
+            return true
+        end
+    end
+    return false
+end
+
 --[[
 API:
 ON - Turn on the engine.
@@ -130,25 +176,86 @@ If nothing to do and in the air, HOLD will execute automatically.
 If the engine is turned off, only the ON command will work.
 ]]
 local function listener(command)
-    local action, param1, param2 = table.unpack(utils.split(command))
+    local action, param1 = table.unpack(utils.split(command))
+    if action == "CANCEL" then
+        applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(0, THRUSTERS_PER_MODULE))
+        setThrustersAngle(0)
+        for i = 1, #commandQueue do
+            table.insert(commandsToCancel, commandQueue[i])
+        end
+        return
+    end
+    local id = math.random(999999999) -- Guess that works
+    table.insert(commandQueue, #commandQueue + 1, id)
+    while commandQueue[1] ~= id do
+        sleep(0.5)
+        if cancelCommand(id) then return end
+    end
     if not isEngineOn and action ~= "ON" then
+        table.remove(commandQueue, 1)
         return
     elseif action == "ON" then
         enableEngine(true)
     elseif action == "OFF" then
         enableEngine(false)
+    elseif action == "HOLD" then
+        local redstoneToHold = redstonePerModuleToHold()
+        applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(redstoneToHold, THRUSTERS_PER_MODULE))
+        local targetHeight = physics.getLocation().y
+        while true do
+            sleep(0.5)
+            if cancelCommand(id) then return end
+            local currentHeight = physics.getLocation().y
+            if currentHeight > targetHeight then
+                applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(redstoneToHold - 1,
+                    THRUSTERS_PER_MODULE))
+            elseif currentHeight < targetHeight then
+                applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(redstoneToHold + 1,
+                    THRUSTERS_PER_MODULE))
+            end
+        end
     elseif action == "UP" then
+        local targetHeight = physics.getLocation().y + param1
         setThrustersAngle(0)
         applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(15 * THRUSTERS_PER_MODULE,
             THRUSTERS_PER_MODULE))
-    elseif action == "CANCEL" then
+        local upwardsAcceleration = 0
+        local timeUntilNeutral = 0
+        local displacement = 0
+        while physics.getLocation().y + displacement < targetHeight do
+            sleep(0.05)
+            upwardsAcceleration = currentVelocity.y
+            timeUntilNeutral = upwardsAcceleration / physics.GRAVITY_ACCELERATION
+            displacement = upwardsAcceleration * timeUntilNeutral +
+                0.5 * -physics.GRAVITY_ACCELERATION * (timeUntilNeutral ^ 2)
+            if cancelCommand(id) then return end
+        end
         applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(0, THRUSTERS_PER_MODULE))
-        setThrustersAngle(0)
+        sleep(timeUntilNeutral - 0.05)
     end
+    table.remove(commandQueue, 1)
 end
 
 enableEngine(false)
-peripheral.find(
-    "modem",
-    function(name, modem) if modem.isWireless() then sc.hostServer("OvertaleControls", listener, name) end end
-)
+
+local function openListener()
+    peripheral.find(
+        "modem",
+        function(name, modem) if modem.isWireless() then sc.hostServer("OvertaleControls", listener, name) end end
+    )
+end
+
+local function measure()
+    while true do
+        local thisLocation = physics.getLocation()
+        if lastLocation then
+            currentVelocity.x = thisLocation.x - lastLocation.x
+            currentVelocity.y = thisLocation.y - lastLocation.y
+            currentVelocity.z = thisLocation.z - lastLocation.z
+        end
+        lastLocation = thisLocation
+        sleep(1)
+    end
+end
+
+parallel.waitForAny(openListener, measure)

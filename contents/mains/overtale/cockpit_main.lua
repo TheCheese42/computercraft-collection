@@ -151,6 +151,9 @@ local function setupMiddle()
 		:setText("H")
 		:setPosition(4, 2)
 		:setForeground(colors.white)
+	local heightIndicator = frameMiddle:addLabel()
+		:setText("o")
+		:setPosition(4, 18)
 	local heightSlider = frameMiddle:addSlider()
 		:setMax(15)
 		:setStep(15)
@@ -160,16 +163,18 @@ local function setupMiddle()
 		:setSize(1, 15)
 		:setPosition(4, 4)
 		:onChange("step", function(self, value)
+			if heightIndicator.getPosition() == self.getPosition() then
+				return
+			end
 			local height = 60 + (15 - value) * 20
 			local heightDiff = math.floor(height - physics.getLocation().y)
-			sleep(1)
+			send("CANCEL")
 			if heightDiff > 0 then
-				send("CANCEL")
 				send(string.format("UP %d", heightDiff))
 			else
-				send("CANCEL")
 				send(string.format("DOWN %d", heightDiff))
 			end
+			send("HOLD")
 		end)
 	local heightIndicator = frameMiddle:addLabel()
 		:setText("o")

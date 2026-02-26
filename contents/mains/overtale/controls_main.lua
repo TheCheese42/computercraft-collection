@@ -137,7 +137,16 @@ end
 
 local function enableEngine(state)
     isEngineOn = state
+    local engine = peripheral.find("createdieselgenerators:large_diesel_engine_tile_entity")
     local redstoneRelay = peripheral.find("redstone_relay")
+    if state and (next(engine.tanks()) == nil or engine.tanks()[1].amount < 10) then
+        redstoneRelay.setOutput("left", true)
+        sleep(8)
+        redstoneRelay.setOutput("left", false)
+        redstoneRelay.setOutput("front", true)
+        sleep(0.05)
+        redstoneRelay.setOutput("front", false)
+    end
     redstoneRelay.setOutput("bottom", not state)
 end
 

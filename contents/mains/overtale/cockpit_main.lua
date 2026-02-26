@@ -91,7 +91,7 @@ local function setupLeft()
 		:setPosition(2, 8)
 		:onClick(function()
 			send("CANCEL")
-			send("LAND 1")
+			send("LAND")
 		end)
 	frameLeft:addButton()
 		:setText("STOP")
@@ -163,33 +163,30 @@ local function setupMiddle()
 		:setSize(1, 15)
 		:setPosition(4, 4)
 		:onChange("step", function(self, value)
-			if heightIndicator.getPosition() == self.getPosition() then
+			if heightIndicator.y - 3 == self:getStep() then
 				return
 			end
 			local height = 60 + (15 - value) * 20
 			local heightDiff = math.floor(height - physics.getLocation().y)
 			send("CANCEL")
-			if heightDiff > 0 then
-				send(string.format("UP %d", heightDiff))
-			else
-				send(string.format("DOWN %d", heightDiff))
+			if heightDiff > 2 then
+				send(string.format("UP %d", height))
+			elseif heightDiff < 2 then
+				send(string.format("DOWN %d", height))
 			end
-			send("HOLD")
+			send(string.format("HOLD %d", height))
 		end)
-	local heightIndicator = frameMiddle:addLabel()
-		:setText("o")
-		:setPosition(4, 18)
 	basalt.schedule(function()
 		local shouldSetStep = true
 		while true do
-			local height = math.ceil(physics.getLocation().y)
+			local height = math.ceil(physics.getLocation().y) - 10
 			local pos_y = 18 - math.ceil(math.max(math.min((height - 60), 300), 0) * (15 / 300))
 			heightIndicator:setPosition(4, pos_y)
 			if shouldSetStep then
 				heightSlider:setStep(pos_y - 3)
 				shouldSetStep = false
 			end
-			sleep(1)
+			sleep(0.5)
 		end
 	end)
 	frameMiddle:addLabel()

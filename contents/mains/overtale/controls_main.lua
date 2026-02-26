@@ -28,7 +28,7 @@ peripheral.find("modem",
         end
     end)
 local event_type, event_msg = cn.listen()
-local event_type, event_msg = cn.listen()
+event_type, event_msg = cn.listen()
 if event_type == "encrypted_message" then
     extraMass = extraMass + event_msg
 end
@@ -63,7 +63,6 @@ peripheral.find("modem",
 event_type, event_msg = cn.listen()
 event_type, event_msg = cn.listen()
 if event_type == "encrypted_message" then
-    print(event_type, event_msg)
     extraMass = extraMass + event_msg
 end
 
@@ -166,25 +165,25 @@ local function cancelCommand(id)
 end
 
 --[[
-API:
-ON - Turn on the engine.
-OFF - Turn off the engine.
-UP <int blocks> - Move up x blocks.
-DOWN <int blocks> - Drop down x blocks.
-HOLD - Hold current position and momentum.
-LAND [int force] - Attempt to land. If force>0 it will land even if the spot is not suitable for landing.
-TURN <int degrees> - Turn clockwise by the specified degrees (can be negative).
-MOVE <int blocks> - Move forward by x blocks (can be negative).
-BRAKE - Bring horizontal momentum down to zero.
-SPEED - Set horizontal speed on a scale from 0 to 15.
-STABILIZE - Make sure that the ship floats upright.
-CANCEL - Cancels any running operation.
+API:\
+ON - Turn on the engine.\
+OFF - Turn off the engine.\
+UP <int height> - Move up to height.\
+DOWN <int height> - Drop down to height.\
+HOLD [int height] - Hold current (or provided) height and horizontal momentum.\
+LAND - Attempt to land. If force>0 it will land even if the spot is not suitable for landing.\
+TURN <int degrees> - Turn clockwise by the specified degrees (can be negative).\
+MOVE <int blocks> - Move forward by x blocks (can be negative).\
+BRAKE - Bring horizontal momentum down to zero.\
+SPEED <int speed> - Set horizontal speed on a scale from 0 to 15.\
+STABILIZE - Make sure that the ship floats upright.\
+CANCEL - Cancels any running operation.\
 
-When a command is running, new ones will be queued. Only HOLD will be canceled if running.
-If nothing to do and in the air, HOLD will execute automatically.
+When a command is already running, new ones will be queued.
 If the engine is turned off, only the ON command will work.
 ]]
 local function listener(command)
+    print(command)
     local action, param1 = table.unpack(utils.split(command))
     if action == "CANCEL" then
         applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(0, THRUSTERS_PER_MODULE))
@@ -197,7 +196,7 @@ local function listener(command)
     local id = math.random(999999999) -- Guess that works
     table.insert(commandQueue, #commandQueue + 1, id)
     while commandQueue[1] ~= id do
-        sleep(0.5)
+        sleep(0.1)
         if cancelCommand(id) then return end
     end
     if not isEngineOn and action ~= "ON" then
@@ -210,7 +209,7 @@ local function listener(command)
     elseif action == "HOLD" then
         local redstoneToHold = redstonePerModuleToHold()
         applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(redstoneToHold, THRUSTERS_PER_MODULE))
-        local targetHeight = physics.getLocation().y
+        local targetHeight = tonumber(param1) or physics.getLocation().y
         while true do
             sleep(0.5)
             if cancelCommand(id) then return end
@@ -224,7 +223,7 @@ local function listener(command)
             end
         end
     elseif action == "UP" then
-        local targetHeight = physics.getLocation().y + param1
+        local targetHeight = tonumber(param1)
         setThrustersAngle(0)
         applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(15 * THRUSTERS_PER_MODULE,
             THRUSTERS_PER_MODULE))
@@ -241,6 +240,46 @@ local function listener(command)
         end
         applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(0, THRUSTERS_PER_MODULE))
         sleep(timeUntilNeutral - 0.05)
+    elseif action == "DOWN" then
+        local targetHeight = tonumber(param1)
+        setThrustersAngle(0)
+        applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(0, THRUSTERS_PER_MODULE))
+        local redstoneToHold = redstonePerModuleToHold()
+        --[[local initialVerticalVelocity = 0
+        local timeUntilNeutral = 0
+        local displacement = 0
+        local netAcceleration = physics.calcAcceleration(physics.getMass(extraMass),
+            calcMaxShipForce() - physics.getWeight(extraMass))]]
+        while physics.getLocation().y > targetHeight do
+            sleep(0.05)
+            if cancelCommand(id) then return end
+            local strength = (targetHeight / physics.getLocation().y) ^ 4 * redstoneToHold
+            applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(strength, THRUSTERS_PER_MODULE))
+            -- I hate physics.
+            --[[initialVerticalVelocity = currentVelocity.y
+            timeUntilNeutral = -initialVerticalVelocity / netAcceleration
+            displacement = initialVerticalVelocity * timeUntilNeutral +
+                0.5 * netAcceleration * (timeUntilNeutral ^ 2)]]
+        end
+        --[[applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(15, THRUSTERS_PER_MODULE))
+        sleep(timeUntilNeutral)
+        if cancelCommand(id) then return end]]
+        applyRedstoneDistribution(redstoneUtils.distributeRedstoneOverAmount(0, THRUSTERS_PER_MODULE))
+    elseif action == "LAND" then
+        -- TODO
+    elseif action == "TURN" then
+        local degrees = tonumber(param1)
+        -- TODO
+    elseif action == "MOVE" then
+        local distance = tonumber(param1)
+        -- TODO
+    elseif action == "BRAKE" then
+        -- TODO
+    elseif action == "SPEED" then
+        local speed = tonumber(param1)
+        -- TODO
+    elseif action == "STABILIZE" then
+        -- TODO
     end
     table.remove(commandQueue, 1)
 end

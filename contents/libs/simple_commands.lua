@@ -34,7 +34,11 @@ local function hostServer(serverName, listener, modemName, loginGift)
 end
 
 local function clientConnect(serverName, modemName)
-    local socket = cryptoNet.connect(serverName, 10, nil, nil, modemName)
+    local socket
+    while not pcall(function()
+            socket = cryptoNet.connect(serverName, 10, nil, nil, modemName)
+        end) do
+    end
     local user = settings.get("sc_username")
     if not user then
         error("Please set a username (set sc_username ...)")

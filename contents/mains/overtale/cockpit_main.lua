@@ -369,4 +369,11 @@ setupMiddle()
 setupRight()
 setupTop()
 
+basalt.schedule(function()
+	os.pullEvent("redstone")
+	if redstone.getInput("top") then
+		os.reboot()
+	end
+end)
+
 basalt.run()
